@@ -206,9 +206,15 @@ table.dt tr:hover td{background:#F7F9FC}
 .loading-shell{display:flex;align-items:center;justify-content:center;height:300px;color:#8FA3B8;font-size:13px;gap:10px}
 .spin-sm{width:16px;height:16px;border:2px solid #C8D3E0;border-top-color:#1A8FD1;border-radius:50%;animation:spin .6s linear infinite}
 .err-shell{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#D94040;font-size:13px;gap:8px}
+/* Admin Panel Tabs */
+.admin-tab{padding:10px 14px;border:none;background:none;font-family:inherit;font-size:13px;color:#5C7590;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;user-select:none}
+.admin-tab:hover{color:#1A8FD1}
+.admin-tab.active{color:#1A8FD1;border-bottom-color:#1A8FD1}
+.admin-section{display:none}
+.admin-section.active{display:block}
 
 </style>
-</head>
+
 <body>
 
 <!-- ══ LOGIN VIEW ══════════════════════════════════════════════════════════ -->
@@ -546,8 +552,16 @@ table.dt tr:hover td{background:#F7F9FC}
         <div><div class="pg-title">Admin Panel</div><div class="pg-sub">User management and system administration</div></div>
       </div>
 
-      <!-- User Management Section -->
-      <div style="margin-bottom:28px">
+      <!-- Tabs for different admin sections -->
+      <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:0.5px solid #C8D3E0;padding-bottom:0">
+        <button id="tab-users" class="admin-tab active" onclick="switchAdminTab('users')">Users</button>
+        <button id="tab-stats" class="admin-tab" onclick="switchAdminTab('stats')">System Stats</button>
+        <button id="tab-backups" class="admin-tab" onclick="switchAdminTab('backups')">Backups</button>
+        <button id="tab-logs" class="admin-tab" onclick="switchAdminTab('logs')">Activity</button>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="admin-users-tab" class="admin-section" style="display:block">
         <h3 style="font-size:15px;font-weight:600;color:#1A2B3C;margin-bottom:14px">User Management</h3>
         <button class="btn-ghost" onclick="showCreateUserDialog()" style="margin-bottom:14px">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right:5px"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -571,7 +585,91 @@ table.dt tr:hover td{background:#F7F9FC}
         </div>
       </div>
 
-      <!-- Create User Modal (Hidden) -->
+      <!-- System Stats Tab -->
+      <div id="admin-stats-tab" class="admin-section" style="display:none">
+        <h3 style="font-size:15px;font-weight:600;color:#1A2B3C;margin-bottom:14px">System Statistics</h3>
+        <button class="refresh-btn" onclick="loadSystemStats()" style="margin-bottom:14px">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+        <div id="stats-container" class="kpi-row kpi-g4">
+          <div class="kc"><div class="kc-lbl">Total Users</div><div class="kc-val">—</div></div>
+          <div class="kc"><div class="kc-lbl">Active Users</div><div class="kc-val">—</div></div>
+          <div class="kc"><div class="kc-lbl">Admin Users</div><div class="kc-val">—</div></div>
+          <div class="kc"><div class="kc-lbl">Total Records</div><div class="kc-val">—</div></div>
+        </div>
+        <div style="margin-top:20px;padding:14px;background:#F7F9FC;border-radius:8px;border:0.5px solid #C8D3E0">
+          <div style="font-size:12px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Last Update</div>
+          <div id="stats-timestamp" style="font-size:13px;color:#1A2B3C;font-family:'IBM Plex Mono',monospace">—</div>
+        </div>
+      </div>
+
+      <!-- Backups Tab -->
+      <div id="admin-backups-tab" class="admin-section" style="display:none">
+        <h3 style="font-size:15px;font-weight:600;color:#1A2B3C;margin-bottom:14px">Database Backups</h3>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button class="btn-ghost" onclick="createBackup()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right:5px"><path d="M2 7h12M2 11h12M3 3h10c1 0 1 1 1 1v9c0 1 0 1-1 1H3c-1 0-1 0-1-1V4c0-1 0-1 1-1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Create Backup Now
+          </button>
+          <button class="refresh-btn" onclick="loadBackupList()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div id="backup-message" style="display:none;padding:10px;background:#E6F7ED;border:0.5px solid #16a34a;border-radius:6px;color:#16a34a;margin-bottom:14px;font-size:13px"></div>
+        <div class="tbl-wrap">
+          <table class="dt" id="backups-table">
+            <thead>
+              <tr>
+                <th>Backup File</th>
+                <th>Created</th>
+                <th>Size</th>
+                <th style="text-align:center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="backups-tbody">
+              <tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">Loading backups…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activity Log Tab -->
+      <div id="admin-logs-tab" class="admin-section" style="display:none">
+        <h3 style="font-size:15px;font-weight:600;color:#1A2B3C;margin-bottom:14px">Activity Log</h3>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <select id="log-filter" onchange="filterActivityLog(this.value)" style="padding:6px 8px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:12px;color:#1A2B3C;background:white;outline:none;cursor:pointer">
+            <option value="">All Activities</option>
+            <option value="user_created">User Created</option>
+            <option value="user_deleted">User Deleted</option>
+            <option value="user_updated">User Updated</option>
+            <option value="backup_created">Backup Created</option>
+            <option value="login">Login</option>
+          </select>
+          <button class="refresh-btn" onclick="loadActivityLog()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dt" id="logs-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">Loading activity log…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Create User Modal -->
       <div id="create-user-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
         <div style="background:white;border-radius:10px;padding:24px;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.2)">
           <div style="font-size:16px;font-weight:600;color:#1A2B3C;margin-bottom:18px">Create New User</div>
@@ -596,6 +694,39 @@ table.dt tr:hover td{background:#F7F9FC}
             <div style="display:flex;gap:10px;margin-top:10px">
               <button type="submit" style="flex:1;padding:10px;background:#1A8FD1;color:white;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer">Create</button>
               <button type="button" onclick="closeCreateUserDialog()" style="flex:1;padding:10px;background:#EEF2F7;color:#5C7590;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit User Modal -->
+      <div id="edit-user-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+        <div style="background:white;border-radius:10px;padding:24px;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.2)">
+          <div style="font-size:16px;font-weight:600;color:#1A2B3C;margin-bottom:18px">Edit User</div>
+          <form id="edit-user-form" onsubmit="handleEditUser(event)" style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Username</label>
+              <div id="edit-username-display" style="padding:8px 10px;background:#F7F9FC;border-radius:6px;color:#1A2B3C;font-size:13px;font-weight:500">—</div>
+              <input type="hidden" id="edit-user-id" />
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Role</label>
+              <select id="edit-role" style="width:100%;padding:8px 10px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:13px;outline:none">
+                <option value="viewer">Viewer</option>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1A2B3C;cursor:pointer">
+                <input type="checkbox" id="edit-is-active" style="width:16px;height:16px;cursor:pointer;accent-color:#1A8FD1" />
+                Account Active
+              </label>
+            </div>
+            <div id="edit-user-error" style="display:none;color:#D94040;font-size:12px;background:#FEF2F2;padding:8px;border-radius:4px"></div>
+            <div style="display:flex;gap:10px;margin-top:10px">
+              <button type="submit" style="flex:1;padding:10px;background:#1A8FD1;color:white;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer">Save Changes</button>
+              <button type="button" onclick="closeEditUserDialog()" style="flex:1;padding:10px;background:#EEF2F7;color:#5C7590;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer">Cancel</button>
             </div>
           </form>
         </div>
@@ -1136,7 +1267,49 @@ async function handleCreateUser(e) {
 }
 
 function showEditUserDialog(userId, username, role, isActive) {
-  alert(`Edit user: ${username}\nRole: ${role}\nStatus: ${isActive?'Active':'Inactive'}\n\n[Full edit dialog coming soon]`);
+  document.getElementById('edit-user-id').value = userId;
+  document.getElementById('edit-username-display').textContent = username;
+  document.getElementById('edit-role').value = role;
+  document.getElementById('edit-is-active').checked = isActive;
+  document.getElementById('edit-user-modal').style.display = 'flex';
+}
+
+function closeEditUserDialog() {
+  document.getElementById('edit-user-modal').style.display = 'none';
+  document.getElementById('edit-user-form').reset();
+  document.getElementById('edit-user-error').style.display = 'none';
+}
+
+async function handleEditUser(e) {
+  e.preventDefault();
+  const userId = document.getElementById('edit-user-id').value;
+  const newRole = document.getElementById('edit-role').value;
+  const isActive = document.getElementById('edit-is-active').checked;
+  const errEl = document.getElementById('edit-user-error');
+
+  try {
+    const token = getToken();
+    const res = await fetch(API+`/api/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer '+token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({role: newRole, is_active: isActive})
+    });
+
+    if(!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Failed to update user');
+    }
+
+    closeEditUserDialog();
+    adminPageCache['admin'] = false;
+    await loadUsers();
+  } catch(e) {
+    errEl.textContent = e.message || 'Error updating user';
+    errEl.style.display = 'block';
+  }
 }
 
 async function deleteUser(userId, username) {
@@ -1158,6 +1331,164 @@ async function deleteUser(userId, username) {
   } catch(e) {
     alert('Error deleting user: '+e.message);
   }
+}
+
+/* ── ADMIN TAB NAVIGATION ────────────────────────────────────────────── */
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('admin-' + tab + '-tab').style.display = 'block';
+
+  // Load data for the tab if not already cached
+  switch(tab) {
+    case 'stats':
+      if(!adminPageCache['stats']) loadSystemStats();
+      break;
+    case 'backups':
+      if(!adminPageCache['backups']) loadBackupList();
+      break;
+    case 'logs':
+      if(!adminPageCache['logs']) loadActivityLog();
+      break;
+  }
+}
+
+/* ── SYSTEM STATS ────────────────────────────────────────────────────── */
+async function loadSystemStats() {
+  try {
+    const token = getToken();
+    const res = await fetch(API + '/api/admin/system/stats', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error('Failed to load stats');
+    const stats = await res.json();
+
+    document.querySelectorAll('#stats-container .kc-val')[0].textContent = stats.total_users;
+    document.querySelectorAll('#stats-container .kc-val')[1].textContent = stats.active_users;
+    document.querySelectorAll('#stats-container .kc-val')[2].textContent = stats.admin_users;
+    document.querySelectorAll('#stats-container .kc-val')[3].textContent = F.num(stats.total_records);
+    document.getElementById('stats-timestamp').textContent = new Date(stats.date_generated).toLocaleString();
+
+    adminPageCache['stats'] = true;
+  } catch(e) {
+    console.error('Stats load failed', e);
+    document.getElementById('stats-container').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#D94040;padding:20px">Failed to load system statistics</div>';
+  }
+}
+
+/* ── BACKUPS ─────────────────────────────────────────────────────────── */
+async function createBackup() {
+  const msgEl = document.getElementById('backup-message');
+  msgEl.style.display = 'none';
+
+  try {
+    const token = getToken();
+    const res = await fetch(API + '/api/admin/system/backup', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+
+    if (!res.ok) throw new Error('Backup failed');
+    const result = await res.json();
+
+    msgEl.textContent = '✓ ' + result.message;
+    msgEl.style.display = 'block';
+
+    adminPageCache['backups'] = false;
+    await loadBackupList();
+  } catch(e) {
+    msgEl.textContent = '✗ Backup failed: ' + e.message;
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.borderColor = '#D94040';
+    msgEl.style.color = '#D94040';
+    msgEl.style.display = 'block';
+  }
+}
+
+async function loadBackupList() {
+  try {
+    const token = getToken();
+    const res = await fetch(API + '/api/admin/system/backups', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        document.getElementById('backups-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">No backups yet — click "Create Backup Now" to start</td></tr>';
+        adminPageCache['backups'] = true;
+        return;
+      }
+      throw new Error('Failed to load backups');
+    }
+
+    const backups = await res.json();
+    if (!backups || backups.length === 0) {
+      document.getElementById('backups-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">No backups found</td></tr>';
+    } else {
+      document.getElementById('backups-tbody').innerHTML = backups.map(b => `
+        <tr>
+          <td>${b.filename}</td>
+          <td>${new Date(b.created_at).toLocaleString()}</td>
+          <td>${(b.size_bytes / 1024 / 1024).toFixed(2)} MB</td>
+          <td style="text-align:center">
+            <button onclick="downloadBackup('${b.filename}')" style="background:none;border:none;color:#1A8FD1;cursor:pointer;font-size:12px">Download</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    adminPageCache['backups'] = true;
+  } catch(e) {
+    console.error('Backups load failed', e);
+    document.getElementById('backups-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#D94040;padding:20px">Failed to load backups</td></tr>';
+  }
+}
+
+function downloadBackup(filename) {
+  const token = getToken();
+  window.location.href = API + `/api/admin/system/backups/${filename}/download?token=${token}`;
+}
+
+/* ── ACTIVITY LOG ────────────────────────────────────────────────────── */
+async function loadActivityLog() {
+  try {
+    const token = getToken();
+    const res = await fetch(API + '/api/admin/system/logs', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        document.getElementById('logs-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">No activity logs yet</td></tr>';
+        adminPageCache['logs'] = true;
+        return;
+      }
+      throw new Error('Failed to load logs');
+    }
+
+    const logs = await res.json();
+    if (!logs || logs.length === 0) {
+      document.getElementById('logs-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8FA3B8;padding:20px">No activity logs</td></tr>';
+    } else {
+      document.getElementById('logs-tbody').innerHTML = logs.slice(0, 50).map(log => `
+        <tr>
+          <td style="font-size:11px">${new Date(log.timestamp).toLocaleString()}</td>
+          <td><span style="background:${log.action.includes('created')?'rgba(22,163,74,.1)':'rgba(26,143,209,.1)'};padding:2px 6px;border-radius:3px;font-size:11px;font-weight:500;color:${log.action.includes('created')?'#16a34a':'#1A8FD1'}">${log.action}</span></td>
+          <td style="font-size:12px">${log.username || '—'}</td>
+          <td style="font-size:11px;color:#8FA3B8">${log.details || '—'}</td>
+        </tr>
+      `).join('');
+    }
+    adminPageCache['logs'] = true;
+  } catch(e) {
+    console.error('Logs load failed', e);
+    document.getElementById('logs-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#D94040;padding:20px">Failed to load activity logs</td></tr>';
+  }
+}
+
+function filterActivityLog(filterType) {
+  // This is a placeholder - full filtering would require backend pagination
+  loadActivityLog();
 }
 
 </script>
