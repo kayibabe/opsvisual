@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRWB Operations Dashboard</title>
+<link rel="icon"       type="image/x-icon"   href="/static/favicon.ico">
+<link rel="icon"       type="image/png" sizes="32x32" href="/static/favicon-32.png">
+<link rel="icon"       type="image/png" sizes="16x16" href="/static/favicon-16.png">
+<link rel="apple-touch-icon"                          href="/static/favicon-256.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#07192E;--blue:#1A8FD1;--blue-glow:rgba(26,143,209,.18);
+  --blue-lt:#4DAFEE;--white:#ffffff;--g50:#F7F9FC;--g100:#EEF2F7;
+  --g300:#C8D3E0;--g400:#8FA3B8;--g500:#5C7590;--g800:#1A2B3C;
+  --red:#D94040;--red-pale:#FEF2F2;
+}
+html,body{height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--navy);overflow:hidden}
+
+/* ── VIEWS ── */
+#login-view{display:flex;height:100vh;opacity:0;animation:fade-in .4s ease .1s forwards}
+#app-view  {display:none;height:100vh;background:var(--g50)}
+@keyframes fade-in{to{opacity:1}}
+
+/* ── LEFT PANEL ── */
+.left{
+  width:45%;flex-shrink:0;background:var(--navy);
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;padding:40px 36px;
+  position:relative;overflow:hidden;
+}
+.left::before{content:'';position:absolute;top:-100px;right:-60px;width:340px;height:340px;border:1px solid rgba(26,143,209,.10);border-radius:50%;pointer-events:none}
+.left::after {content:'';position:absolute;top:-40px; right:10px; width:180px;height:180px;border:1px solid rgba(26,143,209,.16);border-radius:50%;pointer-events:none}
+
+.brand-section{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;width:100%}
+
+/* Logo — actual image, drop shadow gives it lift off the dark bg */
+.logo-img-lg{
+  width:130px;height:130px;
+  border-radius:50%;
+  object-fit:cover;
+  margin-bottom:18px;
+  filter:drop-shadow(0 4px 22px rgba(26,143,209,.45));
+}
+
+.brand-name{display:none}
+.brand-full{font-size:28px;font-weight:600;color:var(--blue-lt);letter-spacing:-.01em;margin-bottom:32px;line-height:1.25}
+
+.headline{font-size:28px;font-weight:300;color:rgba(255,255,255,.90);line-height:1.3;letter-spacing:-.02em;text-align:center;margin-bottom:12px;position:relative;z-index:1}
+.headline em{font-style:normal;font-weight:600;color:var(--blue-lt)}
+.tagline{font-size:13px;color:rgba(255,255,255,.40);line-height:1.7;text-align:center;max-width:280px;margin-bottom:auto;position:relative;z-index:1}
+
+/* KPI chips */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;position:relative;z-index:1}
+.kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:14px 16px;transition:background .2s}
+.kpi:hover{background:rgba(255,255,255,.08)}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:500;color:var(--white);letter-spacing:-.02em;margin-bottom:3px}
+.kpi-lbl{font-size:10px;color:rgba(255,255,255,.36);text-transform:uppercase;letter-spacing:.08em}
+
+/* Wave */
+.wave-stage{position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;opacity:.08;pointer-events:none}
+.wave-stage svg{width:300%;height:100%;animation:wave 10s linear infinite}
+@keyframes wave{to{transform:translateX(-33.33%)}}
+
+/* ── RIGHT PANEL ── */
+.right{
+  flex:1;background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  padding:48px 64px;position:relative;
+}
+.right::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue) 0%,var(--blue-lt) 100%)}
+
+.login-card{width:100%;max-width:360px}
+.login-card>*{opacity:0;transform:translateY(10px);animation:slide-up .35s ease forwards}
+.login-card>*:nth-child(1){animation-delay:.12s}
+.login-card>*:nth-child(2){animation-delay:.18s}
+.login-card>*:nth-child(3){animation-delay:.24s}
+.login-card>*:nth-child(4){animation-delay:.30s}
+.login-card>*:nth-child(5){animation-delay:.36s}
+@keyframes slide-up{to{opacity:1;transform:translateY(0)}}
+
+.login-eyebrow{font-size:10px;font-weight:600;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.login-title  {font-size:26px;font-weight:600;color:var(--g800);letter-spacing:-.025em;margin-bottom:6px}
+.login-sub    {font-size:13.5px;color:var(--g400);margin-bottom:36px;line-height:1.5}
+
+/* Fields */
+.field{margin-bottom:18px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.input-wrap{position:relative}
+.input-wrap input{
+  width:100%;height:46px;padding:0 42px 0 14px;
+  border:1.5px solid var(--g300);border-radius:9px;
+  font-family:inherit;font-size:14px;color:var(--g800);
+  background:var(--white);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.input-wrap input::placeholder{color:var(--g300)}
+.input-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-glow)}
+.input-wrap input.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(217,64,64,.12)}
+.input-icon{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--g300);cursor:pointer;display:flex;transition:color .15s}
+.input-icon:hover{color:var(--g500)}
+
+/* Error */
+.err-box{display:none;align-items:flex-start;gap:9px;padding:11px 14px;margin-bottom:18px;background:var(--red-pale);border:1px solid rgba(217,64,64,.2);border-radius:9px;font-size:13px;color:var(--red);line-height:1.4}
+.err-box.show{display:flex}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.err-box.shake{animation:shake .3s ease}
+
+/* Meta */
+.meta-row{display:flex;align-items:center;margin-bottom:24px}
+.remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--g500);cursor:pointer}
+.remember input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+
+/* Button */
+.btn-submit{width:100%;height:48px;background:var(--blue);color:var(--white);border:none;border-radius:9px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s,box-shadow .15s;box-shadow:0 2px 12px rgba(26,143,209,.3)}
+.btn-submit:hover:not(:disabled){background:#1680BF;box-shadow:0 4px 18px rgba(26,143,209,.4)}
+.btn-submit:active:not(:disabled){transform:scale(.99)}
+.btn-submit:disabled{opacity:.65;cursor:not-allowed;box-shadow:none}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;display:none;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.login-footer{margin-top:32px;padding-top:24px;border-top:1px solid var(--g100);font-size:11px;color:var(--g400);text-align:center;line-height:1.7}
+
+/* Logo small — in form header */
+.logo-img-sm{width:42px;height:42px;border-radius:50%;object-fit:cover}
+
+/* App stub */
+.app-stub{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--g50)}
+.check-circle{width:64px;height:64px;border-radius:50%;background:#E6F7ED;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.stub-title{font-size:20px;font-weight:600;color:var(--g800);margin-bottom:6px}
+.stub-sub  {font-size:13.5px;color:var(--g400);margin-bottom:28px}
+.btn-ghost{padding:10px 24px;background:transparent;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-ghost:hover{background:rgba(26,143,209,.06)}
+
+@media(max-width:768px){.left{display:none}.right{padding:36px 28px}.right::before{display:none}}
+
+/* ═══════════ DASHBOARD ═══════════ */
+#srwb-app{display:flex;height:100vh;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;color:#1A2B3C;overflow:hidden}
+/* Sidebar */
+#db-nav{width:210px;flex-shrink:0;border-right:0.5px solid #C8D3E0;background:#F7F9FC;display:flex;flex-direction:column;overflow-y:auto}
+#db-nav .nav-logo{padding:14px 16px;border-bottom:0.5px solid #C8D3E0;display:flex;align-items:center;gap:10px}
+#db-nav .nav-logo img{width:36px;height:36px;border-radius:50%}
+#db-nav .nav-logo .nlt{font-size:12px;font-weight:600;color:#1A2B3C;line-height:1.2}
+#db-nav .nav-logo .nls{font-size:10px;color:#8FA3B8}
+.nav-grp{padding:10px 14px 3px;font-size:10px;font-weight:500;color:#8FA3B8;letter-spacing:.08em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:1px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;color:#5C7590;transition:all .08s;user-select:none}
+.nav-item:hover{background:#EEF2F7;color:#1A2B3C}
+.nav-item.active{background:rgba(26,143,209,.12);color:#1A8FD1;font-weight:500}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-bottom{margin-top:auto;padding:12px;border-top:0.5px solid #C8D3E0}
+.user-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#EEF2F7;border-radius:8px}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:#1A8FD1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;flex-shrink:0}
+.user-name{font-size:11.5px;font-weight:500;color:#1A2B3C}
+.user-role{font-size:10px;color:#8FA3B8}
+.btn-logout{margin-top:8px;width:100%;padding:7px;background:transparent;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:12px;color:#5C7590;cursor:pointer;transition:background .1s}
+.btn-logout:hover{background:#EEF2F7;color:#1A2B3C}
+/* FY selector */
+.fy-wrap{padding:10px 12px;border-bottom:0.5px solid #C8D3E0}
+.fy-wrap label{display:block;font-size:10px;font-weight:500;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.fy-wrap select{width:100%;padding:6px 8px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:12.5px;color:#1A2B3C;background:white;outline:none;cursor:pointer}
+/* Main content */
+#db-main{flex:1;min-width:0;overflow-y:auto;background:white}
+.db-page{display:none;padding:22px 24px}
+.db-page.active{display:block}
+/* Page header */
+.pg-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.pg-title{font-size:19px;font-weight:600;color:#1A2B3C;letter-spacing:-.02em}
+.pg-sub{font-size:12px;color:#8FA3B8;margin-top:2px}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:12px;color:#5C7590;cursor:pointer;background:white;transition:background .1s}
+.refresh-btn:hover{background:#F7F9FC}
+/* KPI cards */
+.kpi-row{display:grid;gap:10px;margin-bottom:18px}
+.kpi-g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpi-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpi-g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.kc{padding:14px;background:#F7F9FC;border-radius:8px}
+.kc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#8FA3B8;margin-bottom:5px}
+.kc-val{font-size:20px;font-weight:600;color:#1A2B3C;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em}
+.kc-sub{font-size:11px;color:#8FA3B8;margin-top:3px}
+.kc-up{color:#16a34a}.kc-dn{color:#dc2626}.kc-nt{color:#8FA3B8}
+/* Charts */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-full{grid-column:1/-1}
+.chart-card{border:0.5px solid #C8D3E0;border-radius:10px;padding:14px}
+.chart-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#8FA3B8;margin-bottom:12px}
+.ch-wrap{position:relative;height:200px}
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-size:11px;color:#5C7590}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* Table */
+.tbl-wrap{border:0.5px solid #C8D3E0;border-radius:10px;overflow-x:auto;margin-bottom:16px}
+table.dt{width:100%;border-collapse:collapse;font-size:11.5px}
+table.dt th{padding:8px 10px;text-align:right;font-size:10px;font-weight:500;color:#8FA3B8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border-bottom:0.5px solid #C8D3E0;background:#F7F9FC}
+table.dt th:first-child{text-align:left}
+table.dt td{padding:7px 10px;text-align:right;border-bottom:0.5px solid #EEF2F7;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1A2B3C;white-space:nowrap}
+table.dt td:first-child{text-align:left;font-family:'IBM Plex Sans',sans-serif;color:#5C7590}
+table.dt tr:last-child td{border-bottom:none}
+table.dt tr:hover td{background:#F7F9FC}
+/* Loading/Error */
+.loading-shell{display:flex;align-items:center;justify-content:center;height:300px;color:#8FA3B8;font-size:13px;gap:10px}
+.spin-sm{width:16px;height:16px;border:2px solid #C8D3E0;border-top-color:#1A8FD1;border-radius:50%;animation:spin .6s linear infinite}
+.err-shell{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#D94040;font-size:13px;gap:8px}
+
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN VIEW ══════════════════════════════════════════════════════════ -->
+<div id="login-view">
+
+  <!-- Left: brand panel -->
+  <div class="left">
+    <div class="brand-section">
+      <img src="/static/logo.png" alt="SRWB Logo" class="logo-img-lg">
+      <div class="brand-name">SRWB</div>
+      <div class="brand-full">Southern Region Water Board</div>
+    </div>
+
+    <div style="position:relative;z-index:1;width:100%;text-align:center">
+      <div class="headline">Operations &amp;<br><em>Performance</em><br>Dashboard</div>
+      <div class="tagline">Real-time monitoring of water production, customer metrics, collections and infrastructure across all service zones.</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">75,595</div><div class="kpi-lbl">Active Customers</div></div>
+      <div class="kpi"><div class="kpi-val">1.22M m³</div><div class="kpi-lbl">Monthly Production</div></div>
+      <div class="kpi"><div class="kpi-val">32%</div><div class="kpi-lbl">NRW Rate</div></div>
+      <div class="kpi"><div class="kpi-val">MWK 1.91B</div><div class="kpi-lbl">Dec Collections</div></div>
+    </div>
+
+    <div class="wave-stage">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C120,65 240,15 360,40 C480,65 600,15 720,40 C840,65 960,15 1080,40 C1200,65 1320,15 1440,40 L1440,80 L0,80Z" fill="white"/>
+        <path d="M0,56 C120,32 240,72 360,56 C480,32 600,72 720,56 C840,32 960,72 1080,56 C1200,32 1320,72 1440,56 L1440,80 L0,80Z" fill="white" opacity=".5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Right: login form -->
+  <div class="right">
+    <div class="login-card">
+
+      <!-- Logo + wordmark beside form title -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+        <img src="/static/logo.png" alt="SRWB" class="logo-img-sm">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--g800)">SRWB Operations</div>
+          <div style="font-size:11px;color:var(--g400)">Southern Region Water Board</div>
+        </div>
+      </div>
+
+      <div class="login-eyebrow">Secure Access</div>
+      <div class="login-title">Welcome back</div>
+      <div class="login-sub">Sign in with your SRWB credentials to continue.</div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <input type="text" id="username" name="username"
+                   placeholder="Enter your username"
+                   autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="password" name="password"
+                   placeholder="••••••••" autocomplete="current-password" required>
+            <span class="input-icon" onclick="togglePwd()" title="Show / hide">
+              <svg id="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <ellipse cx="12" cy="12" rx="9" ry="6" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+              <svg id="eye-hide" width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:none">
+                <path d="M3 3l18 18M10.5 10.5A3 3 0 0013.5 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M6.3 6.3C4.3 7.7 2.8 9.7 2 12c1.7 4.3 5.7 7 10 7a10.6 10.6 0 005.7-1.7M9 5.4A10.7 10.7 0 0112 5c4.3 0 8.3 2.7 10 7a11.5 11.5 0 01-2.1 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div id="err-box" class="err-box" role="alert">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 8v5M12 15.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span id="err-text">Invalid username or password.</span>
+        </div>
+
+        <div class="meta-row">
+          <label class="remember">
+            <input type="checkbox" id="remember-me"> Keep me signed in
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit" id="login-btn">
+          <div class="spinner" id="spinner"></div>
+          <span id="btn-label">Sign in</span>
+        </button>
+
+      </form>
+
+      <div class="login-footer">
+        SRWB Operations Dashboard &nbsp;·&nbsp; v2.0<br>
+        Authorised personnel only<br>
+        Contact Corporate Planning for access issues
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div id="app-view" style="display:none">
+<div id="srwb-app">
+
+  <!-- Sidebar -->
+  <nav id="db-nav">
+    <div class="nav-logo">
+      <img src="/static/logo.png" alt="SRWB">
+      <div><div class="nlt">SRWB</div><div class="nls">Operations</div></div>
+    </div>
+
+    <div class="fy-wrap">
+      <label>Financial Year</label>
+      <select id="fy-select" onchange="onFyChange(this.value)">
+        <option value="2024">FY 2023/24</option>
+        <option value="2025">FY 2024/25</option>
+        <option value="2026" selected>FY 2025/26</option>
+      </select>
+    </div>
+
+    <div class="nav-grp">Overview</div>
+    <div class="nav-item active" data-page="overview" onclick="navigate('overview')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      Dashboard
+    </div>
+
+    <div class="nav-grp">Operations</div>
+    <div class="nav-item" data-page="production" onclick="navigate('production')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 11s2-4 4-4 3 3 5 3 4-4 5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Production & NRW
+    </div>
+    <div class="nav-item" data-page="customers" onclick="navigate('customers')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M1 14c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M14.5 14c0-2-.9-3.7-2.25-4.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Customers
+    </div>
+    <div class="nav-item" data-page="connections" onclick="navigate('connections')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      New Connections
+    </div>
+    <div class="nav-item" data-page="breakdowns" onclick="navigate('breakdowns')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2L2 14h12z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 7v3M8 12v.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Breakdowns
+    </div>
+
+    <div class="nav-grp">Financial</div>
+    <div class="nav-item" data-page="collections" onclick="navigate('collections')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Billed & Collections
+    </div>
+    <div class="nav-item" data-page="expenses" onclick="navigate('expenses')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 12l3-5 3 3 3-6 3 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Expenses
+    </div>
+    <div class="nav-item" data-page="debtors" onclick="navigate('debtors')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 14V7l6-5 6 5v7" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="5.5" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      Debtors
+    </div>
+
+    <div class="nav-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-av">?</div>
+        <div><div class="user-name" id="user-nm">—</div><div class="user-role" id="user-rl">—</div></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div id="db-main">
+
+    <!-- Overview -->
+    <div id="page-overview" class="db-page active">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Dashboard Overview</div><div class="pg-sub">Board-level KPIs · current financial year</div></div>
+        <button class="refresh-btn" onclick="reloadPage('overview')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="ov-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Active Customers — Monthly</div><div class="ch-wrap"><canvas id="ch-ov-cust"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Collections vs Billed (MWK)</div><div class="ch-wrap"><canvas id="ch-ov-coll"></canvas></div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">NRW % — Monthly Trend</div><div class="ch-wrap"><canvas id="ch-ov-nrw"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Zone Performance — Vol. Produced (m³)</div><div class="ch-wrap"><canvas id="ch-ov-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Production & NRW -->
+    <div id="page-production" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Production & NRW</div><div class="pg-sub">Water produced, revenue water and non-revenue water</div></div>
+        <button class="refresh-btn" onclick="reloadPage('production')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="pr-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card chart-full"><div class="chart-title">Monthly Volume Produced (m³) & NRW %</div><div class="legend" id="pr-leg"></div><div class="ch-wrap" style="height:220px"><canvas id="ch-pr-main"></canvas></div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">NRW % by Zone</div><div class="ch-wrap"><canvas id="ch-pr-zone"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Volume Produced by Zone (m³)</div><div class="ch-wrap"><canvas id="ch-pr-vol"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Customers -->
+    <div id="page-customers" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Customers</div><div class="pg-sub">Active customers, postpaid and prepaid by zone</div></div>
+        <button class="refresh-btn" onclick="reloadPage('customers')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="cu-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Active Customers — Monthly</div><div class="ch-wrap"><canvas id="ch-cu-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Postpaid vs Prepaid by Zone</div><div class="ch-wrap"><canvas id="ch-cu-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Connections -->
+    <div id="page-connections" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">New Connections</div><div class="pg-sub">New water connections by month and zone</div></div>
+        <button class="refresh-btn" onclick="reloadPage('connections')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="cn-kpis" class="kpi-row kpi-g2"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">New Connections — Monthly</div><div class="ch-wrap"><canvas id="ch-cn-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Connections by Zone</div><div class="ch-wrap"><canvas id="ch-cn-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Breakdowns -->
+    <div id="page-breakdowns" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Breakdowns</div><div class="pg-sub">Pipe and pump failures by month and zone</div></div>
+        <button class="refresh-btn" onclick="reloadPage('breakdowns')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="bd-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Pipe Breakdowns — Monthly</div><div class="ch-wrap"><canvas id="ch-bd-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Pipe & Pump by Zone</div><div class="ch-wrap"><canvas id="ch-bd-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Collections -->
+    <div id="page-collections" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Billed & Collections</div><div class="pg-sub">Billing performance and cash collection by month</div></div>
+        <button class="refresh-btn" onclick="reloadPage('collections')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="cl-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card chart-full"><div class="chart-title">Billed vs Collected (MWK)</div><div class="legend"><span class="legend-item"><span class="legend-sq" style="background:#1A8FD1"></span>Billed</span><span class="legend-item"><span class="legend-sq" style="background:#16a34a"></span>Collected</span></div><div class="ch-wrap" style="height:220px"><canvas id="ch-cl-main"></canvas></div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Collections by Zone (MWK)</div><div class="ch-wrap"><canvas id="ch-cl-zone"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Collection Rate by Zone (%)</div><div class="ch-wrap"><canvas id="ch-cl-rate"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Expenses -->
+    <div id="page-expenses" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Operating Expenses</div><div class="pg-sub">Cost breakdown by category and zone</div></div>
+        <button class="refresh-btn" onclick="reloadPage('expenses')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="ex-kpis" class="kpi-row kpi-g3"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Cost Composition</div><div class="ch-wrap"><canvas id="ch-ex-split"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">OpEx by Zone (MWK)</div><div class="ch-wrap"><canvas id="ch-ex-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Debtors -->
+    <div id="page-debtors" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Debtors</div><div class="pg-sub">Outstanding balances — public and private</div></div>
+        <button class="refresh-btn" onclick="reloadPage('debtors')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="de-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Debtors — Monthly Trend (MWK)</div><div class="ch-wrap"><canvas id="ch-de-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Public vs Private by Zone (MWK)</div><div class="ch-wrap"><canvas id="ch-de-zone"></canvas></div></div>
+      </div>
+    </div>
+
+  </div><!-- /db-main -->
+</div><!-- /srwb-app -->
+</div><!-- /app-view -->
+
+
+
+
+<script>
+const API='__API_BASE__',TOKEN_KEY='srwb_token',USER_KEY='srwb_user';
+
+function saveSession(t,u,p){const s=p?localStorage:sessionStorage;s.setItem(TOKEN_KEY,t);s.setItem(USER_KEY,JSON.stringify(u))}
+function getToken(){return localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(TOKEN_KEY)}
+function getUser(){const r=localStorage.getItem(USER_KEY)||sessionStorage.getItem(USER_KEY);try{return r?JSON.parse(r):null}catch{return null}}
+function clearSession(){[localStorage,sessionStorage].forEach(s=>{s.removeItem(TOKEN_KEY);s.removeItem(USER_KEY)})}
+function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch{return null}}
+function isExpired(t){const p=decodeJwt(t);return!p||!p.exp||Date.now()>=p.exp*1000}
+
+/* Check for existing session on load */
+(function(){const t=getToken();if(t&&!isExpired(t))showApp(getUser())})();
+
+async function handleLogin(e){
+  e.preventDefault();
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  const remember=document.getElementById('remember-me').checked;
+  if(!username||!password)return showError('Please enter your username and password.');
+  setLoading(true);clearError();
+  try{
+    let token=await tryLogin(username,password,'json');
+    if(token===null)token=await tryLogin(username,password,'form');
+    if(!token)throw new Error('Invalid username or password.');
+    const d=decodeJwt(token);
+    const user={username:d?.sub||username,role:d?.role||d?.roles?.[0]||'user'};
+    saveSession(token,user,remember);
+    showApp(user);
+  }catch(err){showError(err.message||'Unable to sign in. Please try again.')}
+  finally{setLoading(false)}
+}
+
+async function tryLogin(username,password,fmt){
+  const isJson=fmt==='json';
+  let res;
+  try{
+    res=await fetch(`${API}/api/auth/login`,{
+      method:'POST',
+      headers:{'Content-Type':isJson?'application/json':'application/x-www-form-urlencoded'},
+      body:isJson?JSON.stringify({username,password}):new URLSearchParams({username,password})
+    });
+  }catch{throw new Error('Cannot reach the server. Check your network connection.')}
+  if(res.status===422&&isJson)return null;
+  if(res.status===401||res.status===403)throw new Error('Invalid username or password.');
+  if(!res.ok)throw new Error(`Server error (${res.status}). Contact IT support.`);
+  const data=await res.json();
+  return data.access_token||data.token||null;
+}
+
+function showApp(user){
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('app-view').style.display='block';
+  const sub=document.getElementById('stub-sub');
+  if(user&&sub)sub.textContent=`Signed in as ${user.username} (${user.role}) · Dashboard loading in Phase 2`;
+  initDashboard();
+}
+
+function logout(){clearSession();location.reload()}
+
+function setLoading(on){
+  document.getElementById('login-btn').disabled=on;
+  document.getElementById('spinner').style.display=on?'block':'none';
+  document.getElementById('btn-label').textContent=on?'Signing in…':'Sign in';
+}
+
+function showError(msg){
+  document.getElementById('err-text').textContent=msg;
+  const b=document.getElementById('err-box');
+  b.classList.remove('shake');void b.offsetWidth;
+  b.classList.add('show','shake');
+  ['username','password'].forEach(id=>document.getElementById(id).classList.add('err'));
+}
+
+function clearError(){
+  document.getElementById('err-box').classList.remove('show');
+  ['username','password'].forEach(id=>document.getElementById(id).classList.remove('err'));
+}
+
+['username','password'].forEach(id=>
+  document.getElementById(id).addEventListener('input',clearError)
+);
+
+function togglePwd(){
+  const inp=document.getElementById('password');
+  const vis=inp.type==='text';
+  inp.type=vis?'password':'text';
+  document.getElementById('eye-show').style.display=vis?'':'none';
+  document.getElementById('eye-hide').style.display=vis?'none':'';
+}
+
+/* ═══════════════════════ DASHBOARD (Phase 2) ═══════════════════════════ */
+
+const ZONE_COLORS = {
+  Liwonde:'#0077b6', Mangochi:'#0d9488',
+  Mulanje:'#16a34a', Ngabu:'#d97706', Zomba:'#7c3aed',
+};
+const MONTHS_SHORT = {
+  April:'Apr', May:'May', June:'Jun', July:'Jul', August:'Aug',
+  September:'Sep', October:'Oct', November:'Nov', December:'Dec',
+  January:'Jan', February:'Feb', March:'Mar',
+};
+
+let dbState = { year: 2026 };
+const pageCache = {};
+const chartReg  = {};
+
+/* ── Formatters ─────────────────────────────────────────────────────── */
+const F = {
+  num:  n => n == null ? '—' : Math.round(n).toLocaleString(),
+  M:    n => { if(n==null)return'—'; const a=Math.abs(n); return a>=1e9?(n/1e9).toFixed(2)+'B':a>=1e6?(n/1e6).toFixed(1)+'M':Math.round(n).toLocaleString(); },
+  pct:  n => n==null?'—':n.toFixed(1)+'%',
+  m3:   n => { if(n==null)return'—'; return n>=1e6?(n/1e6).toFixed(2)+'M m³':Math.round(n).toLocaleString()+' m³'; },
+  mwk:  n => 'MWK '+F.M(n),
+};
+
+/* ── API helper ─────────────────────────────────────────────────────── */
+async function api(path) {
+  const token = getToken();
+  const url = API + path + (path.includes('?')?'&':'?') + 'year=' + dbState.year;
+  const res = await fetch(url, { headers: { Authorization: 'Bearer '+token } });
+  if (!res.ok) throw new Error('API error: '+res.status);
+  return res.json();
+}
+async function apiPanel(panel) {
+  const token = getToken();
+  const res = await fetch(API+'/api/panels/'+panel, {
+    headers: { Authorization: 'Bearer '+token }
+  });
+  if (!res.ok) throw new Error('API error: '+res.status);
+  return res.json();
+}
+
+/* ── Chart helpers ──────────────────────────────────────────────────── */
+const GC = 'rgba(0,0,0,0.06)';
+const LC = '#94A3B8';
+const baseScales = (yFmt) => ({
+  x: { ticks:{color:LC,font:{size:10},maxRotation:0,autoSkip:false}, grid:{color:GC} },
+  y: { ticks:{color:LC,font:{size:10},callback:yFmt||undefined}, grid:{color:GC}, border:{display:false} },
+});
+function mkChart(id, cfg) {
+  if(chartReg[id]) chartReg[id].destroy();
+  const el = document.getElementById(id);
+  if(!el) return;
+  chartReg[id] = new Chart(el, cfg);
+}
+function monthLabels(monthly) {
+  return monthly.filter(m=>m.has_data).map(m=>MONTHS_SHORT[m.month]||m.month);
+}
+function monthVals(monthly, field) {
+  return monthly.filter(m=>m.has_data).map(m=>m[field]||0);
+}
+
+/* ── KPI renderer ───────────────────────────────────────────────────── */
+function kpis(containerId, cards) {
+  document.getElementById(containerId).innerHTML = cards.map(c=>`
+    <div class="kc">
+      <div class="kc-lbl">${c.l}</div>
+      <div class="kc-val">${c.v}</div>
+      ${c.s?`<div class="kc-sub ${c.cls||''}">${c.s}</div>`:''}
+    </div>`).join('');
+}
+
+/* ── Loading/error states ───────────────────────────────────────────── */
+function loading(pageId) {
+  document.getElementById(pageId).innerHTML = `
+    <div class="loading-shell"><div class="spin-sm"></div> Loading data…</div>`;
+}
+function errMsg(pageId, msg) {
+  document.getElementById(pageId).innerHTML = `
+    <div class="err-shell">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 15.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      ${msg||'Failed to load data.'} — check the server is running.
+    </div>`;
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────── */
+let currentPage = 'overview';
+
+function navigate(page) {
+  document.querySelectorAll('.db-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  currentPage = page;
+  if(!pageCache[page]) loadPage(page);
+}
+
+function reloadPage(page) {
+  delete pageCache[page];
+  loadPage(page);
+}
+
+function onFyChange(val) {
+  dbState.year = parseInt(val);
+  Object.keys(pageCache).forEach(k=>delete pageCache[k]);
+  loadPage(currentPage);
+}
+
+/* ── Page loaders ───────────────────────────────────────────────────── */
+async function loadPage(page) {
+  try {
+    switch(page) {
+      case 'overview':    await loadOverview();    break;
+      case 'production':  await loadProduction();  break;
+      case 'customers':   await loadCustomers();   break;
+      case 'connections': await loadConnections(); break;
+      case 'breakdowns':  await loadBreakdowns();  break;
+      case 'collections': await loadCollections(); break;
+      case 'expenses':    await loadExpenses();    break;
+      case 'debtors':     await loadDebtors();     break;
+    }
+    pageCache[page] = true;
+  } catch(e) {
+    console.error(page, e);
+  }
+}
+
+/* ── OVERVIEW ────────────────────────────────────────────────────────── */
+async function loadOverview() {
+  kpis('ov-kpis', [{l:'Loading…',v:'—'}]);
+  try {
+    const [kpi, monthly, byZone] = await Promise.all([
+      api('/api/analytics/kpi'),
+      api('/api/analytics/monthly'),
+      api('/api/analytics/by-zone'),
+    ]);
+    kpis('ov-kpis', [
+      {l:'Active Customers', v:F.num(kpi.active_customers)},
+      {l:'Vol. Produced',    v:F.m3(kpi.vol_produced)},
+      {l:'NRW Rate',         v:F.pct(kpi.nrw_pct), s:kpi.nrw_pct>30?'▲ Above 30% target':'▼ Below 30% target', cls:kpi.nrw_pct>30?'kc-dn':'kc-up'},
+      {l:'Cash Collected',   v:F.mwk(kpi.cash_collected)},
+      {l:'Billed',           v:F.mwk(kpi.amt_billed)},
+      {l:'Collection Rate',  v:F.pct(kpi.collection_rate), s:kpi.collection_rate>=100?'▲ Surplus collected':'', cls:'kc-up'},
+      {l:'Total Debtors',    v:F.mwk(kpi.total_debtors)},
+      {l:'Stuck Meters',     v:F.num(kpi.stuck_meters)},
+    ]);
+    document.getElementById('ov-kpis').className = 'kpi-row' + ' kpi-g4';
+
+    const dataMonths = monthly.filter(m=>m.has_data);
+    const labels = dataMonths.map(m=>MONTHS_SHORT[m.month]||m.month);
+
+    mkChart('ch-ov-cust',{type:'line',data:{labels,datasets:[{label:'Active Customers',data:dataMonths.map(m=>m.active_customers||0),borderColor:'#1A8FD1',backgroundColor:'rgba(26,143,209,.08)',tension:.3,pointRadius:3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>(v/1000).toFixed(0)+'K')},plugins:{legend:{display:false}}}});
+
+    mkChart('ch-ov-coll',{type:'bar',data:{labels,datasets:[{label:'Billed',data:dataMonths.map(m=>+(m.amt_billed/1e6).toFixed(1)),backgroundColor:'rgba(26,143,209,.65)',borderRadius:3},{label:'Collected',data:dataMonths.map(m=>+(m.cash_collected/1e6).toFixed(1)),backgroundColor:'rgba(22,163,74,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+
+    mkChart('ch-ov-nrw',{type:'line',data:{labels,datasets:[{label:'NRW %',data:dataMonths.map(m=>m.pct_nrw||0),borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.08)',tension:.3,pointRadius:3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>v+'%')},plugins:{legend:{display:false}}}});
+
+    const zones = byZone.slice().sort((a,b)=>b.vol_produced-a.vol_produced);
+    mkChart('ch-ov-zone',{type:'bar',data:{labels:zones.map(z=>z.zone),datasets:[{data:zones.map(z=>+(z.vol_produced/1e6).toFixed(2)),backgroundColor:zones.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('ov-kpis', 'Overview failed'); }
+}
+
+/* ── PRODUCTION ──────────────────────────────────────────────────────── */
+async function loadProduction() {
+  kpis('pr-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('production');
+    const k = d.kpi;
+    kpis('pr-kpis',[
+      {l:'Vol. Produced',  v:F.m3(k.vol_produced)},
+      {l:'Revenue Water',  v:F.m3(k.revenue_water)},
+      {l:'NRW Volume',     v:F.m3(k.nrw)},
+      {l:'NRW Rate',       v:F.pct(k.nrw_pct), s:k.nrw_pct>30?'Above 30% target':'Within target', cls:k.nrw_pct>30?'kc-dn':'kc-up'},
+    ]);
+    document.getElementById('pr-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    document.getElementById('pr-leg').innerHTML='<span class="legend-item"><span class="legend-sq" style="background:#1A8FD1"></span>Vol. Produced</span><span class="legend-item"><span class="legend-sq" style="background:#d97706"></span>NRW %</span>';
+    mkChart('ch-pr-main',{type:'bar',data:{labels,datasets:[{label:'Vol. Produced (m³)',data:dm.map(m=>+(m.vol_produced/1e6).toFixed(2)),backgroundColor:'rgba(26,143,209,.65)',borderRadius:3,yAxisID:'y'},{type:'line',label:'NRW %',data:dm.map(m=>m.pct_nrw||0),borderColor:'#d97706',tension:.3,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:LC,font:{size:10},maxRotation:0,autoSkip:false},grid:{color:GC}},y:{ticks:{color:LC,font:{size:10},callback:v=>v+'M'},grid:{color:GC},border:{display:false}},y1:{position:'right',ticks:{color:'#d97706',font:{size:10},callback:v=>v+'%'},grid:{display:false},border:{display:false}}},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-pr-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'NRW %',data:bz.map(z=>z.nrw_pct),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'%')},plugins:{legend:{display:false}}}});
+    mkChart('ch-pr-vol',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Vol.',data:bz.map(z=>+(z.vol_produced/1e6).toFixed(2)),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('pr-kpis','Production failed'); }
+}
+
+/* ── CUSTOMERS ───────────────────────────────────────────────────────── */
+async function loadCustomers() {
+  kpis('cu-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('customers');
+    const k = d.kpi;
+    kpis('cu-kpis',[
+      {l:'Active Customers', v:F.num(k.active_customers)},
+      {l:'Postpaid',         v:F.num(k.active_postpaid)},
+      {l:'Prepaid',          v:F.num(k.active_prepaid)},
+      {l:'Population Served',v:F.num(k.pop_supplied)},
+    ]);
+    document.getElementById('cu-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-cu-main',{type:'line',data:{labels,datasets:[{label:'Active',data:dm.map(m=>m.active_customers||0),borderColor:'#1A8FD1',tension:.3,pointRadius:3},{label:'Postpaid',data:dm.map(m=>m.active_postpaid||0),borderColor:'#0d9488',tension:.3,pointRadius:3,borderDash:[4,2]},{label:'Prepaid',data:dm.map(m=>m.active_prepaid||0),borderColor:'#7c3aed',tension:.3,pointRadius:3,borderDash:[4,2]}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>(v/1000).toFixed(0)+'K')},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-cu-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Postpaid',data:bz.map(z=>z.active_postpaid),backgroundColor:'#1A8FD1',borderRadius:3,stack:'s'},{label:'Prepaid',data:bz.map(z=>z.active_prepaid),backgroundColor:'#7c3aed',borderRadius:3,stack:'s'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales()},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('cu-kpis','Customers failed'); }
+}
+
+/* ── CONNECTIONS ─────────────────────────────────────────────────────── */
+async function loadConnections() {
+  kpis('cn-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('connections');
+    const k = d.kpi;
+    kpis('cn-kpis',[
+      {l:'New Connections', v:F.num(k.new_connections)},
+      {l:'Distance (km)',   v:k.distances_km!=null?F.num(k.distances_km)+' km':'—'},
+    ]);
+    document.getElementById('cn-kpis').className='kpi-row kpi-g2';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-cn-main',{type:'bar',data:{labels,datasets:[{label:'New Connections',data:dm.map(m=>m.new_connections||0),backgroundColor:'rgba(26,143,209,.7)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales()},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-cn-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{data:bz.map(z=>z.new_connections),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales()},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('cn-kpis','Connections failed'); }
+}
+
+/* ── BREAKDOWNS ──────────────────────────────────────────────────────── */
+async function loadBreakdowns() {
+  kpis('bd-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('breakdowns');
+    const k = d.kpi;
+    kpis('bd-kpis',[
+      {l:'Pipe Breakdowns',     v:F.num(k.pipe_breakdowns)},
+      {l:'Pump Breakdowns',     v:F.num(k.pump_breakdowns)},
+      {l:'Total Breakdowns',    v:F.num(k.total)},
+      {l:'Per 1K Customers',    v:k.per_1k_customers!=null?k.per_1k_customers.toFixed(1):'—'},
+    ]);
+    document.getElementById('bd-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-bd-main',{type:'bar',data:{labels,datasets:[{label:'Pipe',data:dm.map(m=>m.pipe_breakdowns||0),backgroundColor:'rgba(220,38,38,.65)',borderRadius:3},{label:'Pump',data:dm.map(m=>m.pump_breakdowns||0),backgroundColor:'rgba(217,119,6,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales()},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-bd-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Pipe',data:bz.map(z=>z.pipe_breakdowns),backgroundColor:'rgba(220,38,38,.65)',borderRadius:3,stack:'s'},{label:'Pump',data:bz.map(z=>z.pump_breakdowns),backgroundColor:'rgba(217,119,6,.65)',borderRadius:3,stack:'s'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales()},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('bd-kpis','Breakdowns failed'); }
+}
+
+/* ── COLLECTIONS ─────────────────────────────────────────────────────── */
+async function loadCollections() {
+  kpis('cl-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('collections');
+    const k = d.kpi;
+    kpis('cl-kpis',[
+      {l:'Total Billed',      v:F.mwk(k.amt_billed)},
+      {l:'Cash Collected',    v:F.mwk(k.cash_collected)},
+      {l:'Collection Rate',   v:F.pct(k.collection_rate), cls:k.collection_rate>=100?'kc-up':'kc-nt'},
+      {l:'Billing Gap',       v:F.mwk(k.billing_gap)},
+    ]);
+    document.getElementById('cl-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-cl-main',{type:'bar',data:{labels,datasets:[{label:'Billed',data:dm.map(m=>+(m.amt_billed/1e6).toFixed(1)),backgroundColor:'rgba(26,143,209,.65)',borderRadius:3},{label:'Collected',data:dm.map(m=>+(m.cash_collected/1e6).toFixed(1)),backgroundColor:'rgba(22,163,74,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-cl-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{data:bz.map(z=>+(z.cash_collected/1e6).toFixed(1)),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+    mkChart('ch-cl-rate',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{data:bz.map(z=>bz.find(x=>x.zone===z.zone)?+(z.cash_collected/z.amt_billed*100).toFixed(1):0),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'%')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('cl-kpis','Collections failed'); }
+}
+
+/* ── EXPENSES ────────────────────────────────────────────────────────── */
+async function loadExpenses() {
+  kpis('ex-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('expenses');
+    const k = d.kpi;
+    kpis('ex-kpis',[
+      {l:'Total OpEx',    v:F.mwk(k.op_cost)},
+      {l:'Staff Costs',   v:F.mwk(k.staff_costs)},
+      {l:'Power Costs',   v:F.mwk(k.power_cost)},
+      {l:'Chemical Costs',v:F.mwk(k.chem_cost)},
+      {l:'Fuel Costs',    v:F.mwk(k.fuel_cost)},
+      {l:'Power (kWh)',   v:F.num(k.power_kwh)+' kWh'},
+    ]);
+    document.getElementById('ex-kpis').className='kpi-row kpi-g3';
+    const split = d.cost_split;
+    mkChart('ch-ex-split',{type:'doughnut',data:{labels:split.map(s=>s.label),datasets:[{data:split.map(s=>+(s.value/1e6).toFixed(1)),backgroundColor:split.map(s=>s.color),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{size:11},color:LC}}}}});
+    const bz = d.by_zone;
+    mkChart('ch-ex-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{data:bz.map(z=>+(z.op_cost/1e6).toFixed(1)),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('ex-kpis','Expenses failed'); }
+}
+
+/* ── DEBTORS ─────────────────────────────────────────────────────────── */
+async function loadDebtors() {
+  kpis('de-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('debtors');
+    const k = d.kpi;
+    kpis('de-kpis',[
+      {l:'Total Debtors',   v:F.mwk(k.total_debtors)},
+      {l:'Private Debtors', v:F.mwk(k.private_debtors)},
+      {l:'Public Debtors',  v:F.mwk(k.public_debtors)},
+      {l:'Private Share',   v:F.pct(k.private_pct)},
+    ]);
+    document.getElementById('de-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-de-main',{type:'line',data:{labels,datasets:[{label:'Total Debtors',data:dm.map(m=>+(m.total_debtors/1e6).toFixed(2)),borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.07)',tension:.3,pointRadius:3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-de-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Private',data:bz.map(z=>+(z.private_debtors/1e6).toFixed(2)),backgroundColor:'#dc2626',borderRadius:3,stack:'s'},{label:'Public',data:bz.map(z=>+(z.public_debtors/1e6).toFixed(2)),backgroundColor:'#d97706',borderRadius:3,stack:'s'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('de-kpis','Debtors failed'); }
+}
+
+/* ── Init dashboard ──────────────────────────────────────────────────── */
+function initDashboard() {
+  const user = getUser();
+  if(user) {
+    document.getElementById('user-av').textContent = user.username?.[0]?.toUpperCase()||'U';
+    document.getElementById('user-nm').textContent = user.username;
+    document.getElementById('user-rl').textContent = user.role;
+  }
+  dbState.year = new Date().getMonth()>=3 ? new Date().getFullYear()+1 : new Date().getFullYear();
+  const sel = document.getElementById('fy-select');
+  if(sel) sel.value = dbState.year;
+  loadPage('overview');
+}
+
+</script>
+</body>
+</html>

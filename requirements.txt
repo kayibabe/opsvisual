@@ -1,0 +1,12 @@
+# requirements.txt
+# Generated for SRWB Operations Dashboard
+# Install with:  pip install -r requirements.txt
+
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+sqlalchemy>=2.0.0
+python-multipart>=0.0.9     # required for FastAPI file uploads (UploadFile)
+openpyxl>=3.1.0             # Excel parsing
+python-jose[cryptography]   # JWT tokens (used by app/auth.py)
+passlib[bcrypt]             # password hashing (used by app/auth.py)
+pytest>=8.0.0               # test runner
