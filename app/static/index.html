@@ -31,12 +31,12 @@ html,body{height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;backgroun
   width:45%;flex-shrink:0;background:var(--navy);
   display:flex;flex-direction:column;align-items:center;
   justify-content:space-between;padding:40px 36px;
-  position:relative;overflow:hidden;
+  position:relative;overflow:hidden;gap:24px;
 }
 .left::before{content:'';position:absolute;top:-100px;right:-60px;width:340px;height:340px;border:1px solid rgba(26,143,209,.10);border-radius:50%;pointer-events:none}
 .left::after {content:'';position:absolute;top:-40px; right:10px; width:180px;height:180px;border:1px solid rgba(26,143,209,.16);border-radius:50%;pointer-events:none}
 
-.brand-section{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;width:100%}
+.brand-section{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;width:100%;gap:12px}
 
 /* Logo — actual image, drop shadow gives it lift off the dark bg */
 .logo-img-lg{
@@ -50,16 +50,16 @@ html,body{height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;backgroun
 .brand-name{display:none}
 .brand-full{font-size:28px;font-weight:600;color:var(--blue-lt);letter-spacing:-.01em;margin-bottom:32px;line-height:1.25}
 
-.headline{font-size:28px;font-weight:300;color:rgba(255,255,255,.90);line-height:1.3;letter-spacing:-.02em;text-align:center;margin-bottom:12px;position:relative;z-index:1}
+.headline{font-size:36px;font-weight:300;color:rgba(255,255,255,.90);line-height:1.35;letter-spacing:-.02em;text-align:center;margin-bottom:16px;position:relative;z-index:1;max-width:320px;margin-left:auto;margin-right:auto}
 .headline em{font-style:normal;font-weight:600;color:var(--blue-lt)}
-.tagline{font-size:13px;color:rgba(255,255,255,.40);line-height:1.7;text-align:center;max-width:280px;margin-bottom:auto;position:relative;z-index:1}
+.tagline{font-size:13.5px;color:rgba(255,255,255,.45);line-height:1.8;text-align:center;max-width:300px;margin-bottom:auto;position:relative;z-index:1;margin-left:auto;margin-right:auto}
 
 /* KPI chips */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;position:relative;z-index:1}
-.kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:14px 16px;transition:background .2s}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:280px;position:relative;z-index:1;margin:0 auto}
+.kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:16px 12px;transition:background .2s;text-align:center}
 .kpi:hover{background:rgba(255,255,255,.08)}
-.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:500;color:var(--white);letter-spacing:-.02em;margin-bottom:3px}
-.kpi-lbl{font-size:10px;color:rgba(255,255,255,.36);text-transform:uppercase;letter-spacing:.08em}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;color:var(--white);letter-spacing:-.02em;margin-bottom:6px}
+.kpi-lbl{font-size:10px;color:rgba(255,255,255,.40);text-transform:uppercase;letter-spacing:.08em;line-height:1.3}
 
 /* Wave */
 .wave-stage{position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;opacity:.08;pointer-events:none}
@@ -228,8 +228,8 @@ table.dt tr:hover td{background:#F7F9FC}
       <div class="brand-full">Southern Region Water Board</div>
     </div>
 
-    <div style="position:relative;z-index:1;width:100%;text-align:center">
-      <div class="headline">Operations &amp;<br><em>Performance</em><br>Dashboard</div>
+    <div style="position:relative;z-index:1;width:100%;text-align:center;padding:0 20px">
+      <div class="headline"><em>Operations &amp; Performance</em> Dashboard</div>
       <div class="tagline">Real-time monitoring of water production, customer metrics, collections and infrastructure across all service zones.</div>
     </div>
 
