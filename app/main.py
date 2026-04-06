@@ -25,7 +25,7 @@ import os
 
 from app.auth import ensure_default_admin, get_current_user, require_admin
 from app.database import SessionLocal, create_tables
-from app.routers import analytics, catalogue, panels, records, reports, upload
+from app.routers import analytics, catalogue, panels, records, reports, upload, admin
 from app.routers.users import admin_router, auth_router
 
 
@@ -75,6 +75,9 @@ app.include_router(auth_router)
 
 # ── Admin user-management (admin role required) ───────────────
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
+
+# ── Admin system endpoints (admin role required) ───────────────
+app.include_router(admin.admin_router, dependencies=[Depends(require_admin)])
 
 # ── Data read endpoints (any authenticated user) ──────────────
 # require_export on /export/csv is enforced inside records.py
