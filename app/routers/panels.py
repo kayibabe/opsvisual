@@ -177,10 +177,16 @@ def panel_production(
     nrw = sum(r.nrw           for r in rows)
     return {
         "kpi": {"vol_produced": round(vol,1), "revenue_water": round(rw,1),
-                "nrw": round(nrw,1), "nrw_pct": round(nrw/vol*100,2) if vol else 0},
-        "by_zone": [{"zone":z["zone"],"color":z["color"],"vol_produced":z["vol_produced"]} for z in by_zone],
+                "nrw": round(nrw,1), "nrw_pct": round(nrw/vol*100,2) if vol else 0,
+                "rw_pct": round(rw/vol*100,2) if vol else 0},
+        "by_zone": [{"zone":z["zone"],"color":z["color"],
+                     "vol_produced":z["vol_produced"],
+                     "revenue_water":z["revenue_water"],
+                     "nrw_pct":z["nrw_pct"]} for z in by_zone],
         "monthly": [{"month":m["month"],"has_data":m["has_data"],
-                     "vol_produced":m.get("vol_produced",0),"revenue_water":m.get("revenue_water",0)} for m in monthly],
+                     "vol_produced":m.get("vol_produced",0),
+                     "revenue_water":m.get("revenue_water",0),
+                     "nrw":m.get("nrw",0)} for m in monthly],
     }
 
 
@@ -216,17 +222,37 @@ def panel_customers(
         if k not in lv_map or r.month_no > lv_map[k].month_no:
             lv_map[k] = r
     lv = list(lv_map.values())
+
+    postpaid = sum(r.active_postpaid for r in lv)
+    prepaid = sum(r.active_prepaid for r in lv)
+    total = sum(r.active_customers for r in lv)
+
+    # Breakdown by type
+    indiv_post = sum(r.active_post_individual for r in lv)
+    inst_post = sum(r.active_post_inst for r in lv)
+    comm_post = sum(r.active_post_commercial for r in lv)
+    cwp_post = sum(r.active_post_cwp for r in lv)
+
     return {
         "kpi": {
-            "active_customers": round(sum(r.active_customers for r in lv)),
-            "active_postpaid":  round(sum(r.active_postpaid  for r in lv)),
-            "active_prepaid":   round(sum(r.active_prepaid   for r in lv)),
-            "pop_supplied":     round(sum(r.pop_supplied      for r in lv)),
+            "active_customers": round(total),
+            "active_postpaid":  round(postpaid),
+            "active_prepaid":   round(prepaid),
+            "pop_supplied":     round(sum(r.pop_supplied for r in lv)),
         },
         "by_zone": [{"zone":z["zone"],"color":z["color"],
-                     "active_customers":z["active_customers"]} for z in by_zone],
+                     "active_postpaid":z["active_postpaid"],
+                     "active_prepaid":z["active_prepaid"]} for z in by_zone],
+        "customer_types": [
+            {"type":"Individual (PP)", "value": round(indiv_post), "pct": round(indiv_post/total*100,1) if total else 0},
+            {"type":"Institutional (PP)", "value": round(inst_post), "pct": round(inst_post/total*100,1) if total else 0},
+            {"type":"Commercial (PP)", "value": round(comm_post), "pct": round(comm_post/total*100,1) if total else 0},
+            {"type":"CWP (PP)", "value": round(cwp_post), "pct": round(cwp_post/total*100,1) if total else 0},
+            {"type":"Prepaid", "value": round(prepaid), "pct": round(prepaid/total*100,1) if total else 0},
+        ],
         "monthly": [{"month":m["month"],"has_data":m["has_data"],
-                     "active_customers":m.get("active_customers",0)} for m in monthly],
+                     "active_postpaid":m.get("active_postpaid",0),
+                     "active_prepaid":m.get("active_prepaid",0)} for m in monthly],
     }
 
 
@@ -256,6 +282,13 @@ def panel_breakdowns(
     rows, by_zone, monthly = _panel_base(zones, schemes, months, db)
     pipe = sum(r.pipe_breakdowns for r in rows)
     pump = sum(r.pump_breakdowns for r in rows)
+
+    # Pipe breakdown by type
+    pvc = sum(r.pipe_pvc for r in rows)
+    gi = sum(r.pipe_gi for r in rows)
+    di = sum(r.pipe_di for r in rows)
+    hdpe_ac = sum(r.pipe_hdpe_ac for r in rows)
+
     lv_map = {}
     for r in rows:
         k=(r.zone,r.scheme)
@@ -270,8 +303,15 @@ def panel_breakdowns(
         },
         "by_zone": [{"zone":z["zone"],"color":z["color"],
                      "pipe_breakdowns":z["pipe_breakdowns"],"pump_breakdowns":z["pump_breakdowns"]} for z in by_zone],
+        "pipe_types": [
+            {"type":"PVC", "value": round(pvc), "pct": round(pvc/pipe*100,1) if pipe else 0},
+            {"type":"GI", "value": round(gi), "pct": round(gi/pipe*100,1) if pipe else 0},
+            {"type":"DI", "value": round(di), "pct": round(di/pipe*100,1) if pipe else 0},
+            {"type":"HDPE/AC", "value": round(hdpe_ac), "pct": round(hdpe_ac/pipe*100,1) if pipe else 0},
+        ],
         "monthly": [{"month":m["month"],"has_data":m["has_data"],
-                     "pipe_breakdowns":m.get("pipe_breakdowns",0)} for m in monthly],
+                     "pipe_breakdowns":m.get("pipe_breakdowns",0),
+                     "pump_breakdowns":m.get("pump_breakdowns",0)} for m in monthly],
     }
 
 
@@ -284,19 +324,28 @@ def panel_collections(
     rows, by_zone, monthly = _panel_base(zones, schemes, months, db)
     cash   = sum(r.cash_collected for r in rows)
     billed = sum(r.amt_billed     for r in rows)
+    svc_charges = sum(r.service_charge for r in rows)
+    meter_rent = sum(r.meter_rental for r in rows)
     rate   = cash / billed if billed else 0
     return {
         "kpi": {
             "cash_collected":  round(cash, 2),
             "amt_billed":      round(billed, 2),
+            "service_charges": round(svc_charges, 2),
+            "meter_rental":    round(meter_rent, 2),
             "collection_rate": round(rate * 100, 2),
             "billing_gap":     round(abs(billed - cash), 2),
-            "surplus":          round(max(0, cash - billed), 2),
         },
         "by_zone": [{"zone":z["zone"],"color":z["color"],
                      "cash_collected":z["cash_collected"],"amt_billed":z["amt_billed"]} for z in by_zone],
+        "revenue_components": [
+            {"label":"Water Billing", "value": round(billed, 2), "color":"#0077b6"},
+            {"label":"Service Charges", "value": round(svc_charges, 2), "color":"#00b4d8"},
+            {"label":"Meter Rental", "value": round(meter_rent, 2), "color":"#90e0ef"},
+        ],
         "monthly": [{"month":m["month"],"has_data":m["has_data"],
-                     "cash_collected":m.get("cash_collected",0),"amt_billed":m.get("amt_billed",0)} for m in monthly],
+                     "cash_collected":m.get("cash_collected",0),"amt_billed":m.get("amt_billed",0),
+                     "service_charges":m.get("service_charge",0),"meter_rental":m.get("meter_rental",0)} for m in monthly],
     }
 
 
@@ -363,4 +412,119 @@ def panel_debtors(
                      "public_debtors":z["public_debtors"]} for z in by_zone],
         "monthly": [{"month":m["month"],"has_data":m["has_data"],
                      "total_debtors":m.get("total_debtors",0)} for m in monthly],
+    }
+
+
+# ── SERVICE QUALITY ───────────────────────────────────────────
+@router.get("/service-quality")
+def panel_service_quality(
+    zones: Optional[str] = Query(None), schemes: Optional[str] = Query(None),
+    months: Optional[str] = Query(None), db: Session = Depends(get_db),
+):
+    """Service quality metrics: supply hours, power, query performance"""
+    rows, by_zone, monthly = _panel_base(zones, schemes, months, db)
+
+    supply_hrs = sum(r.supply_hours for r in rows)
+    power_fail = sum(r.power_fail_hours for r in rows)
+    queries_rx = sum(r.queries_received for r in rows)
+    response_avg = sum(r.response_time_avg for r in rows) / len([r for r in rows if r.response_time_avg > 0]) if len([r for r in rows if r.response_time_avg > 0]) else 0
+    resolve_avg = sum(r.time_to_resolve for r in rows) / len([r for r in rows if r.time_to_resolve > 0]) if len([r for r in rows if r.time_to_resolve > 0]) else 0
+
+    return {
+        "kpi": {
+            "supply_hours":      round(supply_hrs, 1),
+            "power_fail_hours":  round(power_fail, 1),
+            "queries_received":  round(queries_rx),
+            "response_time_avg": round(response_avg, 1),
+            "time_to_resolve":   round(resolve_avg, 1),
+        },
+        "by_zone": [{"zone":z["zone"],"color":z["color"],
+                     "supply_hours":z["supply_hours"],
+                     "power_fail_hours":z["power_fail_hours"]} for z in by_zone],
+        "monthly": [{"month":m["month"],"has_data":m["has_data"],
+                     "supply_hours":m.get("supply_hours",0),
+                     "power_fail_hours":m.get("power_fail_hours",0),
+                     "queries_received":m.get("queries_received",0)} for m in monthly],
+    }
+
+
+# ── INFRASTRUCTURE HEALTH ────────────────────────────────────
+@router.get("/infrastructure")
+def panel_infrastructure(
+    zones: Optional[str] = Query(None), schemes: Optional[str] = Query(None),
+    months: Optional[str] = Query(None), db: Session = Depends(get_db),
+):
+    """Infrastructure metrics: stuck meters by type, development lines, pipe health"""
+    rows, by_zone, monthly = _panel_base(zones, schemes, months, db)
+    lv_map = {}
+    for r in rows:
+        k = (r.zone, r.scheme)
+        if k not in lv_map or r.month_no > lv_map[k].month_no:
+            lv_map[k] = r
+    lv = list(lv_map.values())
+
+    stuck_total = sum(max(0, r.stuck_meters) for r in lv)
+    stuck_new_cnt = sum(r.stuck_new for r in rows)
+    stuck_repaired_cnt = sum(r.stuck_repaired for r in rows)
+    dev_lines = sum(r.dev_lines_total for r in rows)
+    pipe_bd = sum(r.pipe_breakdowns for r in rows)
+
+    return {
+        "kpi": {
+            "stuck_meters":        round(stuck_total),
+            "stuck_new":           round(stuck_new_cnt),
+            "stuck_repaired":      round(stuck_repaired_cnt),
+            "dev_lines_total":     round(dev_lines),
+            "pipe_breakdowns":     round(pipe_bd),
+        },
+        "by_zone": [{"zone":z["zone"],"color":z["color"],
+                     "stuck_meters":z["stuck_meters"],
+                     "dev_lines":sum([z.get("dev_lines_32mm",0),z.get("dev_lines_50mm",0),
+                                     z.get("dev_lines_63mm",0),z.get("dev_lines_90mm",0),
+                                     z.get("dev_lines_110mm",0)])} for z in by_zone],
+        "monthly": [{"month":m["month"],"has_data":m["has_data"],
+                     "stuck_meters":m.get("stuck_meters",0),
+                     "stuck_new":m.get("stuck_new",0),
+                     "stuck_repaired":m.get("stuck_repaired",0)} for m in monthly],
+    }
+
+
+# ── REVENUE STREAMS ──────────────────────────────────────────
+@router.get("/revenue")
+def panel_revenue(
+    zones: Optional[str] = Query(None), schemes: Optional[str] = Query(None),
+    months: Optional[str] = Query(None), db: Session = Depends(get_db),
+):
+    """Revenue streams: water billing, service charges, meter rental"""
+    rows, by_zone, monthly = _panel_base(zones, schemes, months, db)
+
+    water_billed = sum(r.amt_billed for r in rows)
+    service_charges = sum(r.service_charge for r in rows)
+    meter_rental = sum(r.meter_rental for r in rows)
+    total_sales = sum(r.total_sales for r in rows)
+    cash_collected = sum(r.cash_collected for r in rows)
+
+    return {
+        "kpi": {
+            "water_billed":     round(water_billed, 2),
+            "service_charges":  round(service_charges, 2),
+            "meter_rental":     round(meter_rental, 2),
+            "total_sales":      round(total_sales, 2),
+            "cash_collected":   round(cash_collected, 2),
+            "collection_rate":  round(cash_collected/total_sales*100, 1) if total_sales else 0,
+        },
+        "by_zone": [{"zone":z["zone"],"color":z["color"],
+                     "water_billed":z["amt_billed"],
+                     "service_charges":z["service_charge"],
+                     "meter_rental":z["meter_rental"]} for z in by_zone],
+        "revenue_split": [
+            {"label":"Water Billing", "value": round(water_billed, 2), "color":"#0077b6"},
+            {"label":"Service Charges", "value": round(service_charges, 2), "color":"#00b4d8"},
+            {"label":"Meter Rental", "value": round(meter_rental, 2), "color":"#90e0ef"},
+        ],
+        "monthly": [{"month":m["month"],"has_data":m["has_data"],
+                     "water_billed":m.get("amt_billed",0),
+                     "service_charges":m.get("service_charge",0),
+                     "meter_rental":m.get("meter_rental",0),
+                     "cash_collected":m.get("cash_collected",0)} for m in monthly],
     }

@@ -390,6 +390,21 @@ table.dt tr:hover td{background:#F7F9FC}
       Debtors
     </div>
 
+    <div class="nav-item" data-page="service-quality" onclick="navigate('service-quality')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 12h12M2 8h8M2 4h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Service Quality
+    </div>
+
+    <div class="nav-item" data-page="infrastructure" onclick="navigate('infrastructure')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="6" width="4" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="9" width="2" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/></svg>
+      Infrastructure
+    </div>
+
+    <div class="nav-item" data-page="revenue" onclick="navigate('revenue')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M6 7h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Revenue Streams
+    </div>
+
     <div class="nav-grp" id="admin-nav-grp" style="display:none">Administration</div>
     <div class="nav-item" data-page="admin" id="admin-nav-item" style="display:none" onclick="navigate('admin')">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-2 1.8-4 6-4s6 2 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 2h3M12.5 3.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -543,6 +558,54 @@ table.dt tr:hover td{background:#F7F9FC}
       <div class="chart-row">
         <div class="chart-card"><div class="chart-title">Debtors — Monthly Trend (MWK)</div><div class="ch-wrap"><canvas id="ch-de-main"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Public vs Private by Zone (MWK)</div><div class="ch-wrap"><canvas id="ch-de-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Service Quality Panel -->
+    <div id="page-service-quality" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Service Quality</div><div class="pg-sub">Supply reliability, power and customer support metrics</div></div>
+        <button class="refresh-btn" onclick="reloadPage('service-quality')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="sq-kpis" class="kpi-row kpi-g3"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Supply Hours & Power Failures — Monthly</div><div class="ch-wrap"><canvas id="ch-sq-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Query Performance by Zone</div><div class="ch-wrap"><canvas id="ch-sq-queries"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Infrastructure Health Panel -->
+    <div id="page-infrastructure" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Infrastructure Health</div><div class="pg-sub">Stuck meters, development lines, and maintenance metrics</div></div>
+        <button class="refresh-btn" onclick="reloadPage('infrastructure')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="ih-kpis" class="kpi-row kpi-g4"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Stuck Meters — Monthly Trend</div><div class="ch-wrap"><canvas id="ch-ih-main"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Stuck Meters by Zone</div><div class="ch-wrap"><canvas id="ch-ih-zone"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Revenue Streams Panel -->
+    <div id="page-revenue" class="db-page">
+      <div class="pg-hdr">
+        <div><div class="pg-title">Revenue Streams</div><div class="pg-sub">Water billing, service charges, meter rental breakdown</div></div>
+        <button class="refresh-btn" onclick="reloadPage('revenue')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 112 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="rv-kpis" class="kpi-row kpi-g3"></div>
+      <div class="chart-row">
+        <div class="chart-card"><div class="chart-title">Revenue by Type (MWK)</div><div class="ch-wrap"><canvas id="ch-rv-split"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Monthly Collections vs Billing (MWK)</div><div class="ch-wrap"><canvas id="ch-rv-main"></canvas></div></div>
       </div>
     </div>
 
@@ -960,6 +1023,9 @@ async function loadPage(page) {
       case 'collections': await loadCollections(); break;
       case 'expenses':    await loadExpenses();    break;
       case 'debtors':     await loadDebtors();     break;
+      case 'service-quality': await loadServiceQuality(); break;
+      case 'infrastructure':  await loadInfrastructure();  break;
+      case 'revenue':     await loadRevenue();     break;
       case 'admin':       await loadAdmin();       break;
     }
     pageCache[page] = true;
@@ -1150,6 +1216,73 @@ async function loadDebtors() {
     const bz = d.by_zone;
     mkChart('ch-de-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Private',data:bz.map(z=>+(z.private_debtors/1e6).toFixed(2)),backgroundColor:'#dc2626',borderRadius:3,stack:'s'},{label:'Public',data:bz.map(z=>+(z.public_debtors/1e6).toFixed(2)),backgroundColor:'#d97706',borderRadius:3,stack:'s'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
   } catch(e) { errMsg('de-kpis','Debtors failed'); }
+}
+
+/* ── SERVICE QUALITY ─────────────────────────────────────────────────── */
+async function loadServiceQuality() {
+  kpis('sq-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('service-quality');
+    const k = d.kpi;
+    kpis('sq-kpis',[
+      {l:'Avg Supply Hours',    v:k.supply_hours.toFixed(1)+' hrs'},
+      {l:'Power Failures',      v:k.power_fail_hours.toFixed(1)+' hrs'},
+      {l:'Queries Received',    v:F.num(k.queries_received)},
+      {l:'Avg Response Time',   v:k.response_time_avg.toFixed(1)+' hrs'},
+      {l:'Avg Resolution Time', v:k.time_to_resolve.toFixed(1)+' hrs'},
+    ]);
+    document.getElementById('sq-kpis').className='kpi-row kpi-g3';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-sq-main',{type:'bar',data:{labels,datasets:[{label:'Supply Hours',data:dm.map(m=>m.supply_hours||0),backgroundColor:'rgba(0,119,182,.65)',borderRadius:3,yAxisID:'y'},{type:'line',label:'Power Failures (hrs)',data:dm.map(m=>m.power_fail_hours||0),borderColor:'#d97706',tension:.3,pointRadius:3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:LC,font:{size:10}},grid:{color:GC}},y:{ticks:{color:LC,font:{size:10}},grid:{color:GC},border:{display:false}},y1:{position:'right',ticks:{color:'#d97706',font:{size:10}},grid:{display:false},border:{display:false}}},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-sq-queries',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Queries',data:bz.map(z=>z.supply_hours||0),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales()},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('sq-kpis','Service Quality failed'); }
+}
+
+/* ── INFRASTRUCTURE ──────────────────────────────────────────────────── */
+async function loadInfrastructure() {
+  kpis('ih-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('infrastructure');
+    const k = d.kpi;
+    kpis('ih-kpis',[
+      {l:'Stuck Meters',      v:F.num(k.stuck_meters)},
+      {l:'Stuck (New)',       v:F.num(k.stuck_new)},
+      {l:'Stuck (Repaired)',  v:F.num(k.stuck_repaired)},
+      {l:'Dev Lines (km)',    v:k.dev_lines_total.toFixed(1)},
+      {l:'Pipe Breakdowns',   v:F.num(k.pipe_breakdowns)},
+    ]);
+    document.getElementById('ih-kpis').className='kpi-row kpi-g4';
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-ih-main',{type:'bar',data:{labels,datasets:[{label:'Stuck Total',data:dm.map(m=>m.stuck_meters||0),backgroundColor:'rgba(220,38,38,.65)',borderRadius:3},{label:'Newly Stuck',data:dm.map(m=>m.stuck_new||0),backgroundColor:'rgba(217,119,6,.65)',borderRadius:3},{label:'Repaired',data:dm.map(m=>m.stuck_repaired||0),backgroundColor:'rgba(22,163,74,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales()},plugins:{legend:{display:false}}}});
+    const bz = d.by_zone;
+    mkChart('ch-ih-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Stuck Meters',data:bz.map(z=>z.stuck_meters||0),backgroundColor:bz.map(z=>ZONE_COLORS[z.zone]||'#64748b'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{...baseScales()},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('ih-kpis','Infrastructure failed'); }
+}
+
+/* ── REVENUE STREAMS ─────────────────────────────────────────────────── */
+async function loadRevenue() {
+  kpis('rv-kpis',[{l:'Loading…',v:'—'}]);
+  try {
+    const d = await apiPanel('revenue');
+    const k = d.kpi;
+    kpis('rv-kpis',[
+      {l:'Water Billing (MWK)',   v:F.mwk(k.water_billed)},
+      {l:'Service Charges (MWK)', v:F.mwk(k.service_charges)},
+      {l:'Meter Rental (MWK)',    v:F.mwk(k.meter_rental)},
+      {l:'Total Sales (MWK)',     v:F.mwk(k.total_sales)},
+      {l:'Cash Collected (MWK)',  v:F.mwk(k.cash_collected)},
+      {l:'Collection Rate',       v:F.pct(k.collection_rate)},
+    ]);
+    document.getElementById('rv-kpis').className='kpi-row kpi-g3';
+    const split = d.revenue_split;
+    mkChart('ch-rv-split',{type:'doughnut',data:{labels:split.map(s=>s.label),datasets:[{data:split.map(s=>+(s.value/1e6).toFixed(1)),backgroundColor:split.map(s=>s.color),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{size:11},color:LC}}}}});
+    const dm = d.monthly.filter(m=>m.has_data);
+    const labels = dm.map(m=>MONTHS_SHORT[m.month]||m.month);
+    mkChart('ch-rv-main',{type:'bar',data:{labels,datasets:[{label:'Water Billed',data:dm.map(m=>+(m.water_billed/1e6).toFixed(1)),backgroundColor:'rgba(0,119,182,.65)',borderRadius:3},{label:'Cash Collected',data:dm.map(m=>+(m.cash_collected/1e6).toFixed(1)),backgroundColor:'rgba(22,163,74,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{...baseScales(v=>v+'M')},plugins:{legend:{display:false}}}});
+  } catch(e) { errMsg('rv-kpis','Revenue failed'); }
 }
 
 /* ── Init dashboard ──────────────────────────────────────────────────── */
