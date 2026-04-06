@@ -571,6 +571,7 @@ table.dt tr:hover td{background:#F7F9FC}
           <table class="dt" id="users-table">
             <thead>
               <tr>
+                <th>Full Name</th>
                 <th>Username</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -579,7 +580,7 @@ table.dt tr:hover td{background:#F7F9FC}
               </tr>
             </thead>
             <tbody id="users-tbody">
-              <tr><td colspan="5" style="text-align:center;color:#8FA3B8;padding:20px">Loading users…</td></tr>
+              <tr><td colspan="6" style="text-align:center;color:#8FA3B8;padding:20px">Loading users…</td></tr>
             </tbody>
           </table>
         </div>
@@ -675,6 +676,10 @@ table.dt tr:hover td{background:#F7F9FC}
           <div style="font-size:16px;font-weight:600;color:#1A2B3C;margin-bottom:18px">Create New User</div>
           <form id="create-user-form" onsubmit="handleCreateUser(event)" style="display:flex;flex-direction:column;gap:14px">
             <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Full Name</label>
+              <input type="text" id="new-full-name" placeholder="John Doe (optional)" style="width:100%;padding:8px 10px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:13px;outline:none" />
+            </div>
+            <div>
               <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Username</label>
               <input type="text" id="new-username" placeholder="Enter username" required style="width:100%;padding:8px 10px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:13px;outline:none" />
             </div>
@@ -704,10 +709,14 @@ table.dt tr:hover td{background:#F7F9FC}
         <div style="background:white;border-radius:10px;padding:24px;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.2)">
           <div style="font-size:16px;font-weight:600;color:#1A2B3C;margin-bottom:18px">Edit User</div>
           <form id="edit-user-form" onsubmit="handleEditUser(event)" style="display:flex;flex-direction:column;gap:14px">
+            <input type="hidden" id="edit-user-id" />
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Full Name</label>
+              <input type="text" id="edit-full-name" placeholder="John Doe" style="width:100%;padding:8px 10px;border:0.5px solid #C8D3E0;border-radius:6px;font-family:inherit;font-size:13px;outline:none" />
+            </div>
             <div>
               <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Username</label>
               <div id="edit-username-display" style="padding:8px 10px;background:#F7F9FC;border-radius:6px;color:#1A2B3C;font-size:13px;font-weight:500">—</div>
-              <input type="hidden" id="edit-user-id" />
             </div>
             <div>
               <label style="display:block;font-size:11px;font-weight:600;color:#8FA3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Role</label>
@@ -1187,25 +1196,26 @@ async function loadUsers() {
     renderUsersTable(users);
   } catch(e) {
     console.error('Load users failed', e);
-    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#D94040;padding:20px">Failed to load users</td></tr>';
+    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#D94040;padding:20px">Failed to load users</td></tr>';
   }
 }
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
   if(!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8FA3B8;padding:20px">No users found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8FA3B8;padding:20px">No users found</td></tr>';
     return;
   }
   const currentUser = getUser();
   tbody.innerHTML = users.map(u=>`
     <tr>
+      <td>${u.full_name || '—'}</td>
       <td>${u.username}</td>
       <td><span style="background:${u.role==='admin'?'rgba(220,38,38,.1)':u.role==='user'?'rgba(26,143,209,.1)':'rgba(143,163,184,.1)'};padding:4px 8px;border-radius:4px;font-size:11px;font-weight:500;color:${u.role==='admin'?'#dc2626':u.role==='user'?'#1A8FD1':'#5C7590'}">${u.role}</span></td>
       <td><span style="color:${u.is_active?'#16a34a':'#8FA3B8'}">${u.is_active?'Active':'Inactive'}</span></td>
       <td style="font-size:11px;color:#8FA3B8">${u.created_at?new Date(u.created_at).toLocaleDateString():'—'}</td>
       <td style="text-align:center">
-        <button onclick="showEditUserDialog(${u.id},'${u.username}','${u.role}',${u.is_active})" style="background:none;border:none;color:#1A8FD1;cursor:pointer;font-size:12px;margin-right:8px">Edit</button>
+        <button onclick="showEditUserDialog(${u.id},'${u.username}','${u.full_name || ''}','${u.role}',${u.is_active})" style="background:none;border:none;color:#1A8FD1;cursor:pointer;font-size:12px;margin-right:8px">Edit</button>
         ${currentUser.username!==u.username?`<button onclick="deleteUser(${u.id},'${u.username}')" style="background:none;border:none;color:#D94040;cursor:pointer;font-size:12px">Delete</button>`:''}
       </td>
     </tr>`).join('');
@@ -1213,7 +1223,7 @@ function renderUsersTable(users) {
 
 function showCreateUserDialog() {
   document.getElementById('create-user-modal').style.display = 'flex';
-  document.getElementById('new-username').focus();
+  document.getElementById('new-full-name').focus();
 }
 
 function closeCreateUserDialog() {
@@ -1224,13 +1234,14 @@ function closeCreateUserDialog() {
 
 async function handleCreateUser(e) {
   e.preventDefault();
+  const fullName = document.getElementById('new-full-name').value.trim();
   const username = document.getElementById('new-username').value.trim();
   const password = document.getElementById('new-password').value;
   const role = document.getElementById('new-role').value;
   const errEl = document.getElementById('create-user-error');
 
   if(!username || !password) {
-    errEl.textContent = 'Please fill in all fields';
+    errEl.textContent = 'Please fill in username and password';
     errEl.style.display = 'block';
     return;
   }
@@ -1249,7 +1260,7 @@ async function handleCreateUser(e) {
         'Authorization': 'Bearer '+token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({username, password, role})
+      body: JSON.stringify({username, full_name: fullName || null, password, role})
     });
 
     if(!res.ok) {
@@ -1266,8 +1277,9 @@ async function handleCreateUser(e) {
   }
 }
 
-function showEditUserDialog(userId, username, role, isActive) {
+function showEditUserDialog(userId, username, fullName, role, isActive) {
   document.getElementById('edit-user-id').value = userId;
+  document.getElementById('edit-full-name').value = fullName || '';
   document.getElementById('edit-username-display').textContent = username;
   document.getElementById('edit-role').value = role;
   document.getElementById('edit-is-active').checked = isActive;
@@ -1283,6 +1295,7 @@ function closeEditUserDialog() {
 async function handleEditUser(e) {
   e.preventDefault();
   const userId = document.getElementById('edit-user-id').value;
+  const fullName = document.getElementById('edit-full-name').value.trim();
   const newRole = document.getElementById('edit-role').value;
   const isActive = document.getElementById('edit-is-active').checked;
   const errEl = document.getElementById('edit-user-error');
@@ -1295,7 +1308,7 @@ async function handleEditUser(e) {
         'Authorization': 'Bearer '+token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({role: newRole, is_active: isActive})
+      body: JSON.stringify({full_name: fullName || null, role: newRole, is_active: isActive})
     });
 
     if(!res.ok) {

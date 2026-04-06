@@ -73,6 +73,7 @@ class ChangePasswordIn(BaseModel):
 class UserOut(BaseModel):
     id:         int
     username:   str
+    full_name:  Optional[str]
     role:       str
     is_active:  bool
     created_at: Optional[datetime]
@@ -83,6 +84,7 @@ class UserOut(BaseModel):
 
 class CreateUserIn(BaseModel):
     username: str
+    full_name: Optional[str] = None
     password: str
     role:     str = "user"
 
@@ -110,6 +112,7 @@ class CreateUserIn(BaseModel):
 
 
 class UpdateUserIn(BaseModel):
+    full_name: Optional[str] = None
     role:      Optional[str] = None
     is_active: Optional[bool] = None
 
@@ -217,6 +220,7 @@ def create_user(
 
     user = User(
         username=payload.username,
+        full_name=payload.full_name,
         password_hash=hash_password(payload.password),
         role=payload.role,
         created_by=current_user.username,
@@ -234,7 +238,7 @@ def update_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Update a user's role or active status.  Admin only."""
+    """Update a user's profile, role, or active status.  Admin only."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, f"User {user_id} not found.")
@@ -246,6 +250,7 @@ def update_user(
         if payload.is_active is False:
             raise HTTPException(400, "You cannot deactivate your own account.")
 
+    if payload.full_name is not None: user.full_name = payload.full_name
     if payload.role      is not None: user.role      = payload.role
     if payload.is_active is not None: user.is_active = payload.is_active
 
