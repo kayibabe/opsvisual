@@ -30,36 +30,36 @@ html,body{height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;backgroun
 .left{
   width:45%;flex-shrink:0;background:var(--navy);
   display:flex;flex-direction:column;align-items:center;
-  justify-content:space-between;padding:40px 36px;
-  position:relative;overflow:hidden;gap:24px;
+  justify-content:space-between;padding:30px 28px;
+  position:relative;overflow:hidden;gap:12px;
 }
 .left::before{content:'';position:absolute;top:-100px;right:-60px;width:340px;height:340px;border:1px solid rgba(26,143,209,.10);border-radius:50%;pointer-events:none}
 .left::after {content:'';position:absolute;top:-40px; right:10px; width:180px;height:180px;border:1px solid rgba(26,143,209,.16);border-radius:50%;pointer-events:none}
 
-.brand-section{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;width:100%;gap:12px}
+.brand-section{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;width:100%;gap:8px;flex-shrink:0}
 
 /* Logo — actual image, drop shadow gives it lift off the dark bg */
 .logo-img-lg{
-  width:130px;height:130px;
+  width:110px;height:110px;
   border-radius:50%;
   object-fit:cover;
-  margin-bottom:18px;
+  margin-bottom:8px;
   filter:drop-shadow(0 4px 22px rgba(26,143,209,.45));
 }
 
 .brand-name{display:none}
-.brand-full{font-size:28px;font-weight:600;color:var(--blue-lt);letter-spacing:-.01em;margin-bottom:32px;line-height:1.25}
+.brand-full{font-size:24px;font-weight:600;color:var(--blue-lt);letter-spacing:-.01em;margin-bottom:0;line-height:1.2}
 
-.headline{font-size:36px;font-weight:300;color:rgba(255,255,255,.90);line-height:1.35;letter-spacing:-.02em;text-align:center;margin-bottom:16px;position:relative;z-index:1;max-width:320px;margin-left:auto;margin-right:auto}
+.headline{font-size:32px;font-weight:300;color:rgba(255,255,255,.90);line-height:1.3;letter-spacing:-.02em;text-align:center;margin-bottom:8px;position:relative;z-index:1;max-width:300px;margin-left:auto;margin-right:auto;flex-shrink:0}
 .headline em{font-style:normal;font-weight:600;color:var(--blue-lt)}
-.tagline{font-size:13.5px;color:rgba(255,255,255,.45);line-height:1.8;text-align:center;max-width:300px;margin-bottom:auto;position:relative;z-index:1;margin-left:auto;margin-right:auto}
+.tagline{font-size:12.5px;color:rgba(255,255,255,.45);line-height:1.6;text-align:center;max-width:280px;margin-bottom:0;position:relative;z-index:1;margin-left:auto;margin-right:auto;flex-shrink:0}
 
 /* KPI chips */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:280px;position:relative;z-index:1;margin:0 auto}
-.kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:16px 12px;transition:background .2s;text-align:center}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:260px;position:relative;z-index:1;margin:0 auto;flex-shrink:0}
+.kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 10px;transition:background .2s;text-align:center}
 .kpi:hover{background:rgba(255,255,255,.08)}
-.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;color:var(--white);letter-spacing:-.02em;margin-bottom:6px}
-.kpi-lbl{font-size:10px;color:rgba(255,255,255,.40);text-transform:uppercase;letter-spacing:.08em;line-height:1.3}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:var(--white);letter-spacing:-.02em;margin-bottom:4px}
+.kpi-lbl{font-size:9px;color:rgba(255,255,255,.40);text-transform:uppercase;letter-spacing:.07em;line-height:1.2}
 
 /* Wave */
 .wave-stage{position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;opacity:.08;pointer-events:none}
@@ -228,7 +228,7 @@ table.dt tr:hover td{background:#F7F9FC}
       <div class="brand-full">Southern Region Water Board</div>
     </div>
 
-    <div style="position:relative;z-index:1;width:100%;text-align:center;padding:0 20px">
+    <div style="position:relative;z-index:1;width:100%;text-align:center;padding:0 16px;flex-shrink:0">
       <div class="headline"><em>Operations &amp; Performance</em> Dashboard</div>
       <div class="tagline">Real-time monitoring of water production, customer metrics, collections and infrastructure across all service zones.</div>
     </div>
