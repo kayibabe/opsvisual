@@ -8,6 +8,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 
 export default function OverviewPage() {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [overview, setOverview] = useState<any>(null)
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([])
 
@@ -18,20 +19,53 @@ export default function OverviewPage() {
   const loadData = async () => {
     try {
       setLoading(true)
+      setError(null)
       const [overviewData, trendData] = await Promise.all([
         dataService.getOverview(),
         dataService.getMonthlyTrend('collections')
       ])
       setOverview(overviewData)
       setMonthlyTrend(trendData)
-    } catch (error) {
-      console.error('Failed to load overview:', error)
+    } catch (err: any) {
+      console.error('Failed to load overview:', err)
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to load dashboard data'
+      setError(errorMsg)
+      // Set mock data for demo purposes
+      setOverview({
+        customers: { active_total: 0, active_postpaid: 0, active_prepaid: 0, new_connections: 0, trend: 'neutral', change_pct: 0 },
+        production: { vol_produced: 0, vol_rw: 0, vol_nrw: 0, nrw_pct: 0, trend: 'neutral', change_pct: 0 },
+        collections: { collected_total: 0, collection_rate: 0, trend: 'neutral', change_pct: 0 }
+      })
+      setMonthlyTrend([])
     } finally {
       setLoading(false)
     }
   }
 
   if (loading) return <LoadingSpinner />
+  
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Dashboard Data</h2>
+          <p className="text-sm text-red-600 mb-4">{error}</p>
+          <p className="text-xs text-gray-500 mb-4">
+            The backend API endpoints may not be fully implemented yet. Please ensure:<br/>
+            • Backend is running on port 8000<br/>
+            • Required API endpoints exist: /api/panels/overview, /api/analytics/trend<br/>
+            • Database contains data from Excel uploads
+          </p>
+          <button
+            onClick={loadData}
+            className="px-4 py-2 bg-blue text-white rounded-lg hover:bg-blue/90 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
