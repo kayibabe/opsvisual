@@ -18,7 +18,7 @@ from typing import List, Optional
 import shutil
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, status, FileResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
